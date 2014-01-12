@@ -19,14 +19,14 @@ endif
 command! -nargs=0 AddTaskToOF call s:AddTaskToOF()
 command! -range   AddTasksToOF <line1>,<line2>call s:AddTasksToOF()
 
-function! s:AddTaskToOFInbox(task)
-  let task = '"' . substitute(a:task, "\"", "\\\\\"", "g") . '"'
+function! s:AddTaskToOFInbox(task_name)
+  let task_name = '"' . substitute(a:task_name, "\"", "\\\\\"", "g") . '"'
   let script = "!osascript "
   let script = script." -e 'tell application \"OmniFocus\"'"
-  let script = script." -e '  set theDoc to first document'"
-  let script = script." -e '  set theTask to " . task . "'"
-  let script = script." -e '  tell theDoc'"
-  let script = script." -e '    make new inbox task with properties {name:theTask}'"
+  let script = script." -e '  set doc to first document'"
+  let script = script." -e '  set taskName to " . task_name . "'"
+  let script = script." -e '  tell doc'"
+  let script = script." -e '    make new inbox task with properties {name:taskName}'"
   let script = script." -e '  end tell'"
   let script = script." -e 'end tell'"
   silent execute script
@@ -47,6 +47,9 @@ function! s:AddTasksToOF() range
   endwhile
 
   echo "tasks are added"
+endfunction
+
+function! s:getIndentCount(task_name)
 endfunction
 
 let &cpo = s:save_cpo
