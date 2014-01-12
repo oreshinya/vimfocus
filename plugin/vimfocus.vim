@@ -7,14 +7,17 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 nnoremap <silent> <Plug>AddTaskToOF :AddTaskToOF<CR>
-""vnoremap <silent> <Plug>AddTasksToOF :AddTasksToOF<CR>
+vnoremap <silent> <Plug>AddTasksToOF :AddTasksToOF<CR>
 
 if !hasmapto('<Plug>AddTaskToOF')
   nmap <silent> <Leader>of <Plug>AddTaskToOF
 endif
-""if !hasmapto('<Plug>AddTasksToOF')
-""  vmap <silent> <Leader>of <Plug>AddTasksToOF
-""endif
+if !hasmapto('<Plug>AddTasksToOF')
+  vmap <silent> <Leader>of <Plug>AddTasksToOF
+endif
+
+command! -nargs=0 AddTaskToOF call s:AddTaskToOF()
+command! -range   AddTasksToOF <line1>,<line2>call s:AddTasksToOF()
 
 function! s:AddTaskToOFInbox(task)
   let task = '"' . substitute(a:task, "\"", "\\\\\"", "g") . '"'
@@ -34,6 +37,17 @@ function! s:AddTaskToOF()
   echo "task is added"
 endfunction
 
+function! s:AddTasksToOF() range
+  let current = a:firstline
+  let last = a:lastline
+
+  while current <= last
+    call s:AddTaskToOFInbox(getline(current))
+    let current = current + 1
+  endwhile
+
+  echo "tasks are added"
+endfunction
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
