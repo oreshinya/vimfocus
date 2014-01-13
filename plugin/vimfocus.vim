@@ -48,17 +48,21 @@ function! s:AddTasksToOF() range
   let script = script." -e '  tell doc'"
 
   while current <= last
-    let indent_count = s:getIndentCount(getline(current))
-    let task_name = '"' . substitute(getline(current), "\"", "\\\\\"", "g") . '"'
-    if !exists("first_indent_count")
-      let first_indent_count = indent_count
-    end
+    let line = getline(current)
+    let indent_count = s:getIndentCount(line)
+    let removed_blank = substitute(line, '^\s*', '', '')
+    if removed_blank != ''
+      let task_name = '"' . substitute(removed_blank, "\"", "\\\\\"", "g") . '"'
+      if !exists("first_indent_count")
+        let first_indent_count = indent_count
+      end
 
-    let script = script." -e '    set taskName to " . task_name . "'"
-    let script = script." -e '    set task" . indent_count . " to make new inbox task with properties {name:taskName}'"
-    if indent_count > first_indent_count
-      let before_indent_count = indent_count - g:vf_per_indent_count
-      let script = script." -e '    move task" . indent_count . " to end of tasks of task" . before_indent_count . "'"
+      let script = script." -e '    set taskName to " . task_name . "'"
+      let script = script." -e '    set task" . indent_count . " to make new inbox task with properties {name:taskName}'"
+      if indent_count > first_indent_count
+        let before_indent_count = indent_count - g:vf_per_indent_count
+        let script = script." -e '    move task" . indent_count . " to end of tasks of task" . before_indent_count . "'"
+      endif
     endif
     let current = current + 1
   endwhile
