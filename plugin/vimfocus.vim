@@ -3,6 +3,10 @@ if exists("g:vimfocus_is_loaded")
 endif
 let g:vimfocus_is_loaded = 1
 
+if !exists("g:vf_per_indent_count")
+  let g:vf_per_indent_count = 2
+end
+
 let s:save_cpo = &cpo
 set cpo&vim
 
@@ -46,11 +50,14 @@ function! s:AddTasksToOF() range
   while current <= last
     let indent_count = s:getIndentCount(getline(current))
     let task_name = '"' . substitute(getline(current), "\"", "\\\\\"", "g") . '"'
+    if !exists("first_indent_count")
+      let first_indent_count = indent_count
+    end
 
     let script = script." -e '    set taskName to " . task_name . "'"
     let script = script." -e '    set task" . indent_count . " to make new inbox task with properties {name:taskName}'"
-    if indent_count > 0
-      let before_indent_count = indent_count - 2
+    if indent_count > first_indent_count
+      let before_indent_count = indent_count - g:vf_per_indent_count
       let script = script." -e '    move task" . indent_count . " to end of tasks of task" . before_indent_count . "'"
     endif
     let current = current + 1
