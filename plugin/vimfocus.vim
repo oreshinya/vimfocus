@@ -19,8 +19,8 @@ endif
 command! -nargs=0 AddTaskToOF call s:AddTaskToOF()
 command! -range   AddTasksToOF <line1>,<line2>call s:AddTasksToOF()
 
-function! s:AddTaskToOFInbox(task_name)
-  let task_name = '"' . substitute(a:task_name, "\"", "\\\\\"", "g") . '"'
+function! s:AddTaskToOF()
+  let task_name = '"' . substitute(getline(getpos(".")[1]), "\"", "\\\\\"", "g") . '"'
   let script = "!osascript "
   let script = script." -e 'tell application \"OmniFocus\"'"
   let script = script." -e '  set doc to first document'"
@@ -30,10 +30,7 @@ function! s:AddTaskToOFInbox(task_name)
   let script = script." -e '  end tell'"
   let script = script." -e 'end tell'"
   silent execute script
-endfunction
 
-function! s:AddTaskToOF()
-  call s:AddTaskToOFInbox(getline(getpos(".")[1]))
   echo "task is added"
 endfunction
 
@@ -41,15 +38,35 @@ function! s:AddTasksToOF() range
   let current = a:firstline
   let last = a:lastline
 
+  let script = "!osascript "
+  let script = script." -e 'tell application \"OmniFocus\"'"
+  let script = script." -e '  set doc to first document'"
+  let script = script." -e '  tell doc'"
+
   while current <= last
-    call s:AddTaskToOFInbox(getline(current))
+    let indent_count = s:getIndentCount(getline(current))
+    let task_name = '"' . substitute(getline(current), "\"", "\\\\\"", "g") . '"'
+
+    let script = script." -e '    set taskName to " . task_name . "'"
+    let script = script." -e '    set task" . indent_count . " to make new inbox task with properties {name:taskName}'"
+    if indent_count > 0
+      let before_indent_count = indent_count - 2
+      let script = script." -e '    move task" . indent_count . " to end of tasks of task" . before_indent_count . "'"
+    endif
     let current = current + 1
   endwhile
+
+  let script = script." -e '  end tell'"
+  let script = script." -e 'end tell'"
+
+  silent execute script
 
   echo "tasks are added"
 endfunction
 
 function! s:getIndentCount(task_name)
+  let indent_str = matchstr(a:task_name, '^\s*')
+  return strlen(indent_str)
 endfunction
 
 let &cpo = s:save_cpo
